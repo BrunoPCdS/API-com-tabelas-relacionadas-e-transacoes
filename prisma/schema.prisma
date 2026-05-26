@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Usuario {
+  id           Int         @id @default(autoincrement())
+  nome         String      @db.VarChar(40) 
+  email        String      @db.VarChar(60) @unique
+  criado_em    DateTime    @default(now())
+  inscricao    Inscricao[]
+  @@map("usuarios")
+}
+
+model Evento {
+  id           Int        @id @default(autoincrement())
+  nome         String     @db.VarChar(60) 
+  descricao    String?    
+  data         DateTime   @db.DateTime
+  local        String     @db.VarChar(60)
+  criado_em    DateTime   @default(now())
+  ingresso     Ingresso[]
+  inscricao    Inscricao[]
+  @@map("eventos")
+}
+
+
+model Ingresso {
+  id           Int        @id @default(autoincrement())
+  tipo         Tipos      @default(Pista)
+  descricao    String?    
+  eventoId     Int        
+  evento       Evento     @relation(fields: [eventoId], references: [id])
+  criado_em    DateTime   @default(now())
+  inscricao    Inscricao[]
+  @@map("ingressos")
+}
+
+
+model Inscricao {
+  id           Int        @id @default(autoincrement())
+  eventoId     Int        
+  evento       Evento     @relation(fields: [eventoId], references: [id])
+  usuarioId    Int
+  usuario      Usuario    @relation(fields: [usuarioId], references: [id])
+  ingressoId   Int
+  ingresso     Ingresso   @relation(fields: [ingressoId], references: [id])
+  criado_em    DateTime   @default(now())
+  @@map("inscricoes")
+}
+
+enum Tipos {
+  VIP
+  Pista
+  MeiaEntrada
+}
