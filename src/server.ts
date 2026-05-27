@@ -3,7 +3,7 @@ const app = express()
 const port = 3000
 
 import routesUsuario from "./routes/usuario"
-import routesEventos from "./routes/eventos"
+import routesEventos from "./routes/evento"
 import routesIngresso from "./routes/ingresso"
 import routesInscricao from "./routes/inscricao"
 
