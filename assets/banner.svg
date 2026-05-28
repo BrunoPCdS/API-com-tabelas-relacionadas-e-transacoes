@@ -1,0 +1,35 @@
+<svg width="1200" height="360" viewBox="0 0 1200 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A"/>
+      <stop offset="0.55" stop-color="#1E293B"/>
+      <stop offset="1" stop-color="#0EA5E9"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="180" y1="120" x2="1020" y2="240" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8"/>
+      <stop offset="1" stop-color="#A5F3FC"/>
+    </linearGradient>
+    <filter id="blur" x="0" y="0" width="1200" height="360" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="45"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="360" rx="32" fill="url(#bg)"/>
+  <circle cx="170" cy="90" r="90" fill="#38BDF8" opacity="0.18" filter="url(#blur)"/>
+  <circle cx="1040" cy="270" r="120" fill="#A5F3FC" opacity="0.12" filter="url(#blur)"/>
+  <path d="M140 250C260 170 360 150 530 170C700 190 820 140 1040 90" stroke="url(#accent)" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+  <path d="M140 270C280 210 390 205 540 225C700 248 830 212 1040 165" stroke="#7DD3FC" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+
+  <text x="80" y="130" fill="#E2E8F0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="54" font-weight="800">
+    API - Evento
+  </text>
+  <text x="80" y="182" fill="#BAE6FD" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="30" font-weight="600">
+    Registro de usuários e ingressos
+  </text>
+  <text x="80" y="226" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="20" font-weight="400">
+    CRUD de eventos, inscrições e emissão de ingressos com envio de confirmação por e-mail.
+  </text>
+
+  <rect x="80" y="262" width="180" height="42" rx="21" fill="#0F172A" opacity="0.65" stroke="#38BDF8"/>
+  <text x="120" y="289" fill="#E0F2FE" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">Node.js + Express</text>
+</svg>
