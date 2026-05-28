@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma"
 import { Router } from "express"
+import nodemailer from "nodemailer"
 import { z } from "zod"
 
 const router = Router()
@@ -32,7 +33,7 @@ router.post("/", async (req, res) => {
 		const inscricao = await prisma.$transaction(async (transaction) => {
 			const evento = await transaction.evento.findUnique({
 				where: { id: eventoId },
-				select: { quantidadeIngressos: true },
+				select: { nome: true, data: true, local: true, quantidadeIngressos: true },
 			})
 
 			if (!evento) {
@@ -48,15 +49,86 @@ router.post("/", async (req, res) => {
 				data: { quantidadeIngressos: { decrement: 1 } },
 			})
 
-			return transaction.inscricao.create({
+			const usuario = await transaction.usuario.findUnique({
+				where: { id: usuarioId },
+				select: { nome: true, email: true },
+			})
+
+			if (!usuario) {
+				throw new Error("USUARIO_NAO_ENCONTRADO")
+			}
+
+			const ingresso = await transaction.ingresso.findUnique({
+				where: { id: ingressoId },
+				select: { tipo: true },
+			})
+
+			if (!ingresso) {
+				throw new Error("INGRESSO_NAO_ENCONTRADO")
+			}
+
+			const inscricaoCriada = await transaction.inscricao.create({
 				data: { eventoId, usuarioId, ingressoId },
 			})
+
+			return {
+				inscricao: inscricaoCriada,
+				evento,
+				usuario,
+				ingresso,
+			}
 		})
-		res.status(201).json(inscricao)
+//email------------------------------------------------------
+		const transporter = nodemailer.createTransport({
+			host: "sandbox.smtp.mailtrap.io",
+			port: 587,
+			secure: false,
+			auth: {
+				user: process.env.MAILTRAP_EMAIL,
+				pass: process.env.MAILTRAP_SENHA,
+			},
+		})
+
+		const dataEvento = new Date(inscricao.evento.data).toLocaleString("pt-BR", {
+			timeZone: "America/Sao_Paulo",
+		})
+
+		try {
+			await transporter.sendMail({
+				from: process.env.MAILTRAP_EMAIL,
+				to: inscricao.usuario.email,
+				subject: "Confirmação de inscrição no evento",
+				html: `
+					<h2>Inscrição confirmada</h2>
+					<p>Olá, ${inscricao.usuario.nome}.</p>
+					<p>Sua inscrição foi realizada com sucesso.</p>
+					<ul>
+						<li><strong>Evento:</strong> ${inscricao.evento.nome}</li>
+						<li><strong>Data:</strong> ${dataEvento}</li>
+						<li><strong>Local:</strong> ${inscricao.evento.local}</li>
+						<li><strong>Ingresso:</strong> ${inscricao.ingresso.tipo}</li>
+					</ul>
+				`,
+			})
+		} catch (emailError) {
+			console.error("Erro ao enviar e-mail de confirmação:", emailError)
+		}
+
+		res.status(201).json(inscricao.inscricao)
 	} catch (error) {
 		if (error instanceof Error) {
 			if (error.message === "EVENTO_NAO_ENCONTRADO") {
 				res.status(404).json({ error: "Evento não encontrado" })
+				return
+			}
+
+			if (error.message === "USUARIO_NAO_ENCONTRADO") {
+				res.status(404).json({ error: "Usuário não encontrado" })
+				return
+			}
+
+			if (error.message === "INGRESSO_NAO_ENCONTRADO") {
+				res.status(404).json({ error: "Ingresso não encontrado" })
 				return
 			}
 
@@ -179,5 +251,4 @@ router.delete("/:id", async (req, res) => {
 		res.status(500).json({ error: "Erro ao deletar inscricao" })
 	}
 })
-
 export default router
