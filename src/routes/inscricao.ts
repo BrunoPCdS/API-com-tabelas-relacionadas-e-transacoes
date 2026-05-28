@@ -29,11 +29,42 @@ router.post("/", async (req, res) => {
 	const { eventoId, usuarioId, ingressoId } = valida.data
 
 	try {
-		const inscricao = await prisma.inscricao.create({
-			data: { eventoId, usuarioId, ingressoId },
+		const inscricao = await prisma.$transaction(async (transaction) => {
+			const evento = await transaction.evento.findUnique({
+				where: { id: eventoId },
+				select: { quantidadeIngressos: true },
+			})
+
+			if (!evento) {
+				throw new Error("EVENTO_NAO_ENCONTRADO")
+			}
+
+			if (evento.quantidadeIngressos <= 0) {
+				throw new Error("SEM_INGRESSOS")
+			}
+
+			await transaction.evento.update({
+				where: { id: eventoId },
+				data: { quantidadeIngressos: { decrement: 1 } },
+			})
+
+			return transaction.inscricao.create({
+				data: { eventoId, usuarioId, ingressoId },
+			})
 		})
 		res.status(201).json(inscricao)
 	} catch (error) {
+		if (error instanceof Error) {
+			if (error.message === "EVENTO_NAO_ENCONTRADO") {
+				res.status(404).json({ error: "Evento não encontrado" })
+				return
+			}
+
+			if (error.message === "SEM_INGRESSOS") {
+				res.status(400).json({ error: "Não há ingressos disponíveis para este evento" })
+				return
+			}
+		}
 		res.status(500).json({ error: "Erro ao criar inscricao" })
 	}
 })
@@ -56,12 +87,60 @@ router.put("/:id", async (req, res) => {
 	const { eventoId, usuarioId, ingressoId } = valida.data
 
 	try {
-		const inscricao = await prisma.inscricao.update({
+		const inscricaoAtual = await prisma.inscricao.findUnique({
 			where: { id: idNumber },
-			data: { eventoId, usuarioId, ingressoId },
+			select: { eventoId: true },
+		})
+
+		if (!inscricaoAtual) {
+			res.status(404).json({ error: "Inscrição não encontrada" })
+			return
+		}
+
+		const inscricao = await prisma.$transaction(async (transaction) => {
+			if (inscricaoAtual.eventoId !== eventoId) {
+				const eventoNovo = await transaction.evento.findUnique({
+					where: { id: eventoId },
+					select: { quantidadeIngressos: true },
+				})
+
+				if (!eventoNovo) {
+					throw new Error("EVENTO_NAO_ENCONTRADO")
+				}
+
+				if (eventoNovo.quantidadeIngressos <= 0) {
+					throw new Error("SEM_INGRESSOS")
+				}
+
+				await transaction.evento.update({
+					where: { id: eventoId },
+					data: { quantidadeIngressos: { decrement: 1 } },
+				})
+
+				await transaction.evento.update({
+					where: { id: inscricaoAtual.eventoId },
+					data: { quantidadeIngressos: { increment: 1 } },
+				})
+			}
+
+			return transaction.inscricao.update({
+				where: { id: idNumber },
+				data: { eventoId, usuarioId, ingressoId },
+			})
 		})
 		res.status(200).json(inscricao)
 	} catch (error) {
+		if (error instanceof Error) {
+			if (error.message === "EVENTO_NAO_ENCONTRADO") {
+				res.status(404).json({ error: "Evento não encontrado" })
+				return
+			}
+
+			if (error.message === "SEM_INGRESSOS") {
+				res.status(400).json({ error: "Não há ingressos disponíveis para este evento" })
+				return
+			}
+		}
 		res.status(500).json({ error: "Erro ao atualizar inscricao" })
 	}
 })
@@ -76,9 +155,25 @@ router.delete("/:id", async (req, res) => {
 	}
 
 	try {
-		await prisma.inscricao.delete({
+		const inscricao = await prisma.inscricao.findUnique({
 			where: { id: idNumber },
+			select: { eventoId: true },
 		})
+
+		if (!inscricao) {
+			res.status(404).json({ error: "Inscrição não encontrada" })
+			return
+		}
+
+		await prisma.$transaction([
+			prisma.evento.update({
+				where: { id: inscricao.eventoId },
+				data: { quantidadeIngressos: { increment: 1 } },
+			}),
+			prisma.inscricao.delete({
+				where: { id: idNumber },
+			}),
+		])
 		res.status(204).send()
 	} catch (error) {
 		res.status(500).json({ error: "Erro ao deletar inscricao" })

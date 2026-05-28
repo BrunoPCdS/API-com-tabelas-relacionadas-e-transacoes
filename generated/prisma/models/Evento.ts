@@ -28,10 +28,12 @@ export type AggregateEvento = {
 
 export type EventoAvgAggregateOutputType = {
   id: number | null
+  quantidadeIngressos: number | null
 }
 
 export type EventoSumAggregateOutputType = {
   id: number | null
+  quantidadeIngressos: number | null
 }
 
 export type EventoMinAggregateOutputType = {
@@ -40,6 +42,7 @@ export type EventoMinAggregateOutputType = {
   descricao: string | null
   data: Date | null
   local: string | null
+  quantidadeIngressos: number | null
   criado_em: Date | null
 }
 
@@ -49,6 +52,7 @@ export type EventoMaxAggregateOutputType = {
   descricao: string | null
   data: Date | null
   local: string | null
+  quantidadeIngressos: number | null
   criado_em: Date | null
 }
 
@@ -58,6 +62,7 @@ export type EventoCountAggregateOutputType = {
   descricao: number
   data: number
   local: number
+  quantidadeIngressos: number
   criado_em: number
   _all: number
 }
@@ -65,10 +70,12 @@ export type EventoCountAggregateOutputType = {
 
 export type EventoAvgAggregateInputType = {
   id?: true
+  quantidadeIngressos?: true
 }
 
 export type EventoSumAggregateInputType = {
   id?: true
+  quantidadeIngressos?: true
 }
 
 export type EventoMinAggregateInputType = {
@@ -77,6 +84,7 @@ export type EventoMinAggregateInputType = {
   descricao?: true
   data?: true
   local?: true
+  quantidadeIngressos?: true
   criado_em?: true
 }
 
@@ -86,6 +94,7 @@ export type EventoMaxAggregateInputType = {
   descricao?: true
   data?: true
   local?: true
+  quantidadeIngressos?: true
   criado_em?: true
 }
 
@@ -95,6 +104,7 @@ export type EventoCountAggregateInputType = {
   descricao?: true
   data?: true
   local?: true
+  quantidadeIngressos?: true
   criado_em?: true
   _all?: true
 }
@@ -191,6 +201,7 @@ export type EventoGroupByOutputType = {
   descricao: string | null
   data: Date
   local: string
+  quantidadeIngressos: number
   criado_em: Date
   _count: EventoCountAggregateOutputType | null
   _avg: EventoAvgAggregateOutputType | null
@@ -223,6 +234,7 @@ export type EventoWhereInput = {
   descricao?: Prisma.StringNullableFilter<"Evento"> | string | null
   data?: Prisma.DateTimeFilter<"Evento"> | Date | string
   local?: Prisma.StringFilter<"Evento"> | string
+  quantidadeIngressos?: Prisma.IntFilter<"Evento"> | number
   criado_em?: Prisma.DateTimeFilter<"Evento"> | Date | string
   ingresso?: Prisma.IngressoListRelationFilter
   inscricao?: Prisma.InscricaoListRelationFilter
@@ -234,6 +246,7 @@ export type EventoOrderByWithRelationInput = {
   descricao?: Prisma.SortOrderInput | Prisma.SortOrder
   data?: Prisma.SortOrder
   local?: Prisma.SortOrder
+  quantidadeIngressos?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   ingresso?: Prisma.IngressoOrderByRelationAggregateInput
   inscricao?: Prisma.InscricaoOrderByRelationAggregateInput
@@ -249,6 +262,7 @@ export type EventoWhereUniqueInput = Prisma.AtLeast<{
   descricao?: Prisma.StringNullableFilter<"Evento"> | string | null
   data?: Prisma.DateTimeFilter<"Evento"> | Date | string
   local?: Prisma.StringFilter<"Evento"> | string
+  quantidadeIngressos?: Prisma.IntFilter<"Evento"> | number
   criado_em?: Prisma.DateTimeFilter<"Evento"> | Date | string
   ingresso?: Prisma.IngressoListRelationFilter
   inscricao?: Prisma.InscricaoListRelationFilter
@@ -260,6 +274,7 @@ export type EventoOrderByWithAggregationInput = {
   descricao?: Prisma.SortOrderInput | Prisma.SortOrder
   data?: Prisma.SortOrder
   local?: Prisma.SortOrder
+  quantidadeIngressos?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
   _count?: Prisma.EventoCountOrderByAggregateInput
   _avg?: Prisma.EventoAvgOrderByAggregateInput
@@ -277,6 +292,7 @@ export type EventoScalarWhereWithAggregatesInput = {
   descricao?: Prisma.StringNullableWithAggregatesFilter<"Evento"> | string | null
   data?: Prisma.DateTimeWithAggregatesFilter<"Evento"> | Date | string
   local?: Prisma.StringWithAggregatesFilter<"Evento"> | string
+  quantidadeIngressos?: Prisma.IntWithAggregatesFilter<"Evento"> | number
   criado_em?: Prisma.DateTimeWithAggregatesFilter<"Evento"> | Date | string
 }
 
@@ -285,6 +301,7 @@ export type EventoCreateInput = {
   descricao?: string | null
   data: Date | string
   local: string
+  quantidadeIngressos?: number
   criado_em?: Date | string
   ingresso?: Prisma.IngressoCreateNestedManyWithoutEventoInput
   inscricao?: Prisma.InscricaoCreateNestedManyWithoutEventoInput
@@ -296,6 +313,7 @@ export type EventoUncheckedCreateInput = {
   descricao?: string | null
   data: Date | string
   local: string
+  quantidadeIngressos?: number
   criado_em?: Date | string
   ingresso?: Prisma.IngressoUncheckedCreateNestedManyWithoutEventoInput
   inscricao?: Prisma.InscricaoUncheckedCreateNestedManyWithoutEventoInput
@@ -306,6 +324,7 @@ export type EventoUpdateInput = {
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   data?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   local?: Prisma.StringFieldUpdateOperationsInput | string
+  quantidadeIngressos?: Prisma.IntFieldUpdateOperationsInput | number
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ingresso?: Prisma.IngressoUpdateManyWithoutEventoNestedInput
   inscricao?: Prisma.InscricaoUpdateManyWithoutEventoNestedInput
@@ -317,6 +336,7 @@ export type EventoUncheckedUpdateInput = {
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   data?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   local?: Prisma.StringFieldUpdateOperationsInput | string
+  quantidadeIngressos?: Prisma.IntFieldUpdateOperationsInput | number
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ingresso?: Prisma.IngressoUncheckedUpdateManyWithoutEventoNestedInput
   inscricao?: Prisma.InscricaoUncheckedUpdateManyWithoutEventoNestedInput
@@ -328,6 +348,7 @@ export type EventoCreateManyInput = {
   descricao?: string | null
   data: Date | string
   local: string
+  quantidadeIngressos?: number
   criado_em?: Date | string
 }
 
@@ -336,6 +357,7 @@ export type EventoUpdateManyMutationInput = {
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   data?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   local?: Prisma.StringFieldUpdateOperationsInput | string
+  quantidadeIngressos?: Prisma.IntFieldUpdateOperationsInput | number
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -345,6 +367,7 @@ export type EventoUncheckedUpdateManyInput = {
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   data?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   local?: Prisma.StringFieldUpdateOperationsInput | string
+  quantidadeIngressos?: Prisma.IntFieldUpdateOperationsInput | number
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -360,11 +383,13 @@ export type EventoCountOrderByAggregateInput = {
   descricao?: Prisma.SortOrder
   data?: Prisma.SortOrder
   local?: Prisma.SortOrder
+  quantidadeIngressos?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
 }
 
 export type EventoAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  quantidadeIngressos?: Prisma.SortOrder
 }
 
 export type EventoMaxOrderByAggregateInput = {
@@ -373,6 +398,7 @@ export type EventoMaxOrderByAggregateInput = {
   descricao?: Prisma.SortOrder
   data?: Prisma.SortOrder
   local?: Prisma.SortOrder
+  quantidadeIngressos?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
 }
 
@@ -382,11 +408,13 @@ export type EventoMinOrderByAggregateInput = {
   descricao?: Prisma.SortOrder
   data?: Prisma.SortOrder
   local?: Prisma.SortOrder
+  quantidadeIngressos?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
 }
 
 export type EventoSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  quantidadeIngressos?: Prisma.SortOrder
 }
 
 export type EventoScalarRelationFilter = {
@@ -431,6 +459,7 @@ export type EventoCreateWithoutIngressoInput = {
   descricao?: string | null
   data: Date | string
   local: string
+  quantidadeIngressos?: number
   criado_em?: Date | string
   inscricao?: Prisma.InscricaoCreateNestedManyWithoutEventoInput
 }
@@ -441,6 +470,7 @@ export type EventoUncheckedCreateWithoutIngressoInput = {
   descricao?: string | null
   data: Date | string
   local: string
+  quantidadeIngressos?: number
   criado_em?: Date | string
   inscricao?: Prisma.InscricaoUncheckedCreateNestedManyWithoutEventoInput
 }
@@ -466,6 +496,7 @@ export type EventoUpdateWithoutIngressoInput = {
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   data?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   local?: Prisma.StringFieldUpdateOperationsInput | string
+  quantidadeIngressos?: Prisma.IntFieldUpdateOperationsInput | number
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inscricao?: Prisma.InscricaoUpdateManyWithoutEventoNestedInput
 }
@@ -476,6 +507,7 @@ export type EventoUncheckedUpdateWithoutIngressoInput = {
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   data?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   local?: Prisma.StringFieldUpdateOperationsInput | string
+  quantidadeIngressos?: Prisma.IntFieldUpdateOperationsInput | number
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   inscricao?: Prisma.InscricaoUncheckedUpdateManyWithoutEventoNestedInput
 }
@@ -485,6 +517,7 @@ export type EventoCreateWithoutInscricaoInput = {
   descricao?: string | null
   data: Date | string
   local: string
+  quantidadeIngressos?: number
   criado_em?: Date | string
   ingresso?: Prisma.IngressoCreateNestedManyWithoutEventoInput
 }
@@ -495,6 +528,7 @@ export type EventoUncheckedCreateWithoutInscricaoInput = {
   descricao?: string | null
   data: Date | string
   local: string
+  quantidadeIngressos?: number
   criado_em?: Date | string
   ingresso?: Prisma.IngressoUncheckedCreateNestedManyWithoutEventoInput
 }
@@ -520,6 +554,7 @@ export type EventoUpdateWithoutInscricaoInput = {
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   data?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   local?: Prisma.StringFieldUpdateOperationsInput | string
+  quantidadeIngressos?: Prisma.IntFieldUpdateOperationsInput | number
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ingresso?: Prisma.IngressoUpdateManyWithoutEventoNestedInput
 }
@@ -530,6 +565,7 @@ export type EventoUncheckedUpdateWithoutInscricaoInput = {
   descricao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   data?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   local?: Prisma.StringFieldUpdateOperationsInput | string
+  quantidadeIngressos?: Prisma.IntFieldUpdateOperationsInput | number
   criado_em?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ingresso?: Prisma.IngressoUncheckedUpdateManyWithoutEventoNestedInput
 }
@@ -580,6 +616,7 @@ export type EventoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   descricao?: boolean
   data?: boolean
   local?: boolean
+  quantidadeIngressos?: boolean
   criado_em?: boolean
   ingresso?: boolean | Prisma.Evento$ingressoArgs<ExtArgs>
   inscricao?: boolean | Prisma.Evento$inscricaoArgs<ExtArgs>
@@ -594,10 +631,11 @@ export type EventoSelectScalar = {
   descricao?: boolean
   data?: boolean
   local?: boolean
+  quantidadeIngressos?: boolean
   criado_em?: boolean
 }
 
-export type EventoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "descricao" | "data" | "local" | "criado_em", ExtArgs["result"]["evento"]>
+export type EventoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "descricao" | "data" | "local" | "quantidadeIngressos" | "criado_em", ExtArgs["result"]["evento"]>
 export type EventoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   ingresso?: boolean | Prisma.Evento$ingressoArgs<ExtArgs>
   inscricao?: boolean | Prisma.Evento$inscricaoArgs<ExtArgs>
@@ -616,6 +654,7 @@ export type $EventoPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     descricao: string | null
     data: Date
     local: string
+    quantidadeIngressos: number
     criado_em: Date
   }, ExtArgs["result"]["evento"]>
   composites: {}
@@ -993,6 +1032,7 @@ export interface EventoFieldRefs {
   readonly descricao: Prisma.FieldRef<"Evento", 'String'>
   readonly data: Prisma.FieldRef<"Evento", 'DateTime'>
   readonly local: Prisma.FieldRef<"Evento", 'String'>
+  readonly quantidadeIngressos: Prisma.FieldRef<"Evento", 'Int'>
   readonly criado_em: Prisma.FieldRef<"Evento", 'DateTime'>
 }
     

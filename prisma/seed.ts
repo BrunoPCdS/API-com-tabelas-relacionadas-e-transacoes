@@ -7,6 +7,7 @@ const eventos: Prisma.EventoCreateInput[] = [
         descricao: "Evento mutcho loco",
         data: "2026-08-15T10:00:00Z",
         local: "Charqueada do guri",
+        quantidadeIngressos: 100,
     },
 ]
 async function main() {

@@ -89,6 +89,7 @@ export const EventoScalarFieldEnum = {
   descricao: 'descricao',
   data: 'data',
   local: 'local',
+  quantidadeIngressos: 'quantidadeIngressos',
   criado_em: 'criado_em'
 } as const
 

@@ -22,6 +22,7 @@ model Evento {
   descricao    String?    
   data         DateTime   @db.DateTime
   local        String     @db.VarChar(60)
+  quantidadeIngressos Int @default(0)
   criado_em    DateTime   @default(now())
   ingresso     Ingresso[]
   inscricao    Inscricao[]
