@@ -26,6 +26,7 @@ const eventoUpdateSchema = eventoBaseSchema.partial().extend({
 router.get("/", async (req, res) => {
     try {
         const eventos = await prisma.evento.findMany({
+            orderBy: { id: "desc" }
         })
         res.status(200).json(eventos)
     } catch (error) {

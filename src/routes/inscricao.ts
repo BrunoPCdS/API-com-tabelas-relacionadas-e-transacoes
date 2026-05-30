@@ -13,7 +13,20 @@ const inscricaoSchema = z.object({
 
 router.get("/", async (req, res) => {
 	try {
-		const inscricoes = await prisma.inscricao.findMany({})
+		const inscricoes = await prisma.inscricao.findMany({
+			orderBy: { id: "desc" },
+			include: {
+				usuario: {
+					select: { id: true, nome: true, email: true, criado_em: true },
+				},
+				evento: {
+					select: { id: true, nome: true, data: true, local: true },
+				},
+				ingresso: {
+					select: { id: true, tipo: true, descricao: true },
+				},
+			},
+		})
 		res.status(200).json(inscricoes)
 	} catch (error) {
 		res.status(500).json({ error: "Erro ao buscar inscricao" })
@@ -246,7 +259,11 @@ router.delete("/:id", async (req, res) => {
 				where: { id: idNumber },
 			}),
 		])
-		res.status(204).send()
+		res.status(200).json({
+			message: "Inscrição deletada com sucesso",
+			id: idNumber,
+			eventoId: inscricao.eventoId,
+		})
 	} catch (error) {
 		res.status(500).json({ error: "Erro ao deletar inscricao" })
 	}

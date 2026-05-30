@@ -11,6 +11,8 @@ const usuarioSchema = z.object({
 	email: z.email({ message: "O email deve ser válido" }),
 })
 
+const usuarioUpdateSchema = usuarioSchema.partial()
+
 router.get("/", async (req, res) => {
 	try {
 		const usuarios = await prisma.usuario.findMany({})
@@ -48,18 +50,25 @@ router.put("/:id", async (req, res) => {
 		return
 	}
 
-	const valida = usuarioSchema.safeParse(req.body)
+	const valida = usuarioUpdateSchema.safeParse(req.body)
 	if (!valida.success) {
 		res.status(400).json({ error: valida.error })
 		return
 	}
 
 	const { nome, email } = valida.data
+	const dataUpdate: {
+		nome?: string
+		email?: string
+	} = {}
+
+	if (nome !== undefined) dataUpdate.nome = nome
+	if (email !== undefined) dataUpdate.email = email
 
 	try {
 		const usuario = await prisma.usuario.update({
 			where: { id: idNumber },
-			data: { nome, email },
+			data: dataUpdate,
 		})
 		res.status(200).json(usuario)
 	} catch (error) {
