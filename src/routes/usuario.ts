@@ -2,8 +2,12 @@ import { prisma } from "../../lib/prisma"
 import { Router } from "express"
 import { z } from "zod"
 import bcrypt from 'bcrypt'
+import { gerarCodigo } from "../utilit/gerarCodigo"
+import { verificaToken } from "../utilit/verificaToken"
 
 const router = Router()
+const expira = new Date()
+expira.setHours(expira.getHours() + 1)
 
 const usuarioSchema = z.object({
 	nome: z.string()
@@ -57,12 +61,13 @@ router.post("/", async (req, res) => {
 	}
 })
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", verificaToken, async (req, res) => {
 	const { id } = req.params
 	const idNumber = Number(id)
 
-	if (Number.isNaN(idNumber)) {
-		res.status(400).json({ error: "O ID do usuário deve ser um número" })
+	// Verifica se o ID do usuário logado é o mesmo do parâmetro da rota
+	if (idNumber !== req.userLogadoId) {
+		res.status(403).json({ error: "Acesso negado. Você só pode alterar seus próprios dados." })
 		return
 	}
 
@@ -84,7 +89,7 @@ router.put("/:id", async (req, res) => {
 
 	try {
 		const usuario = await prisma.usuario.update({
-			where: { id: idNumber },
+			where: { id: req.userLogadoId },
 			data: dataUpdate,
 		})
 		res.status(200).json(usuario)
