@@ -8,49 +8,57 @@ datasource db {
 }
 
 model Usuario {
-  id           Int         @id @default(autoincrement())
-  nome         String      @db.VarChar(40) 
-  email        String      @db.VarChar(60) @unique
-  criado_em    DateTime    @default(now())
-  inscricao    Inscricao[]
+  id                    Int         @id @default(autoincrement())
+  nome                  String      @db.VarChar(40) 
+  email                 String      @db.VarChar(60) @unique
+  senha                 String      @db.VarChar(60)
+  criado_em             DateTime    @default(now())
+  atualizado_em         DateTime    @updatedAt
+  inscricao             Inscricao[]
+
+  codigoDeRecuperacaoSenha String?     @db.VarChar(60)
+  dataDeExpiracaoCodigo    DateTime?   @db.DateTime
   @@map("usuarios")
 }
 
 model Evento {
-  id           Int        @id @default(autoincrement())
-  nome         String     @db.VarChar(60) 
-  descricao    String?    
-  data         DateTime   @db.DateTime
-  local        String     @db.VarChar(60)
-  quantidadeIngressos Int @default(0)
-  criado_em    DateTime   @default(now())
-  ingresso     Ingresso[]
-  inscricao    Inscricao[]
+  id                    Int        @id @default(autoincrement())
+  nome                  String     @db.VarChar(60) 
+  descricao             String?    
+  data                  DateTime   @db.DateTime
+  local                 String     @db.VarChar(60)
+  quantidadeIngressos   Int @default(0)
+  criado_em             DateTime    @default(now())
+  atualizado_em         DateTime    @updatedAt
+  ingresso              Ingresso[]
+  inscricao             Inscricao[]
   @@map("eventos")
 }
 
 
 model Ingresso {
-  id           Int        @id @default(autoincrement())
-  tipo         Tipos      @default(Pista)
-  descricao    String?    
-  eventoId     Int        
-  evento       Evento     @relation(fields: [eventoId], references: [id])
-  criado_em    DateTime   @default(now())
-  inscricao    Inscricao[]
+  id                    Int        @id @default(autoincrement())
+  tipo                  Tipos      @default(Pista)
+  descricao             String?    
+  eventoId              Int        
+  evento                Evento     @relation(fields: [eventoId], references: [id])
+  criado_em             DateTime    @default(now())
+  atualizado_em         DateTime    @updatedAt
+  inscricao             Inscricao[]
   @@map("ingressos")
 }
 
 
 model Inscricao {
-  id           Int        @id @default(autoincrement())
-  eventoId     Int        
-  evento       Evento     @relation(fields: [eventoId], references: [id])
-  usuarioId    Int
-  usuario      Usuario    @relation(fields: [usuarioId], references: [id])
-  ingressoId   Int
-  ingresso     Ingresso   @relation(fields: [ingressoId], references: [id])
-  criado_em    DateTime   @default(now())
+  id                    Int        @id @default(autoincrement())
+  eventoId              Int        
+  evento                Evento     @relation(fields: [eventoId], references: [id])
+  usuarioId             Int
+  usuario               Usuario    @relation(fields: [usuarioId], references: [id])
+  ingressoId            Int
+  ingresso              Ingresso   @relation(fields: [ingressoId], references: [id])
+  criado_em             DateTime    @default(now())
+  atualizado_em         DateTime    @updatedAt
   @@map("inscricoes")
 }
 
