@@ -10,3 +10,5 @@ yarn-error.log*
 
 # Ignorar pastas de migrations geradas pelo Prisma, se preferir
 prisma/migrations/
+
+/generated/
