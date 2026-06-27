@@ -16,7 +16,8 @@ model Usuario {
   atualizado_em         DateTime    @updatedAt
   inscricao             Inscricao[]
 
-  codigoDeRecuperacaoSenha String?     @db.VarChar(60)
+  codigoDeRecuperacao      String?     @db.VarChar(60)
+  codigoExpiraEm           DateTime?   // Para recuperação de senha
   dataDeExpiracaoCodigo    DateTime?   @db.DateTime
   @@map("usuarios")
 }
