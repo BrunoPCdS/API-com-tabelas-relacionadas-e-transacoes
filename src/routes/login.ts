@@ -2,6 +2,7 @@ import { prisma } from "../../lib/prisma"
 import { Router } from "express"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { registraLog } from "../utilit/baseLog"
 
 const router = Router()
 
@@ -38,8 +39,10 @@ router.post("/", async (req, res) => {
         } else {
             res.status(400).json({ error: mensaPadrao })
         }
+        // log ------------------------------
     } catch (error) { 
-        res.status(500).json({ error: "Erro ao fazer login" })
+        await registraLog(`Tentativa de login falhou para o email: ${email}`);
+        return res.status(400).json({ error: mensaPadrao });
     }
 })
 

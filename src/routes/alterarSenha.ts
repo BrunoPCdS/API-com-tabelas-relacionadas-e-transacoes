@@ -3,6 +3,7 @@ import { Router } from "express";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import { validarSenha } from "../utilit/validaSenha";
+import { registraLog } from "../utilit/baseLog";
 
 const router = Router();
 
@@ -65,7 +66,8 @@ router.post("/", async (req, res) => {
             codigoExpiraEm: null
         }
     });
-
+    //---log---
+    await registraLog(`Usuário ${usuario.id} alterou a senha com sucesso.`, usuario.id);
     res.status(200).json({ message: "Senha alterada com sucesso" });
 });
 

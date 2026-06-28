@@ -15,6 +15,7 @@ model Usuario {
   criado_em             DateTime    @default(now())
   atualizado_em         DateTime    @updatedAt
   inscricao             Inscricao[]
+  logs                 Log[]
 
   codigoDeRecuperacao      String?     @db.VarChar(60)
   codigoExpiraEm           DateTime?   // Para recuperação de senha
@@ -61,6 +62,16 @@ model Inscricao {
   criado_em             DateTime    @default(now())
   atualizado_em         DateTime    @updatedAt
   @@map("inscricoes")
+}
+
+model Log {
+  id                    Int        @id @default(autoincrement())
+  descricao             String     @db.VarChar(255)
+  usuarioId             Int?
+  usuario               Usuario?   @relation(fields: [usuarioId], references: [id])
+  criado_em             DateTime    @default(now())
+
+  @@map("logs")
 }
 
 enum Tipos {
