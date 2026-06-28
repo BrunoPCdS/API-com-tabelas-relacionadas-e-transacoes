@@ -19,15 +19,23 @@ router.post("/", async (req, res) => {
         const usuario = await prisma.usuario.findUnique({
             where: { email }
         })
+
         if (usuario == null) {
+            await registraLog(`Tentativa de login falhou para o email (não encontrado): ${email}`);
             res.status(400).json({ error: mensaPadrao })
             return
         }
 
         if (bcrypt.compareSync(senha, usuario.senha)) {
+            const secret = process.env.JWT_SECRET
+
+            if (!secret) {
+                console.error("JWT_SECRET não configurado no ambiente")
+                res.status(500).json({ error: "Configuração de autenticação ausente" })
+                return
+            }
 
             const payload = { userLogadoId: usuario.id, userLogadoNome: usuario.nome, userLogadoEmail: usuario.email }
-            const secret = process.env.JWT_SECRET as string
             const options = { expiresIn: '15m' } as object
             const token = jwt.sign(payload, secret, options)
             res.status(200).json({ 
@@ -37,12 +45,12 @@ router.post("/", async (req, res) => {
                 token: token
             })
         } else {
+            await registraLog(`Tentativa de login falhou para o email (senha incorreta): ${email}`, usuario.id);
             res.status(400).json({ error: mensaPadrao })
         }
-        // log ------------------------------
     } catch (error) { 
-        await registraLog(`Tentativa de login falhou para o email: ${email}`);
-        return res.status(400).json({ error: mensaPadrao });
+        console.error(error);
+        res.status(500).json({ error: "Erro interno no servidor" });
     }
 })
 

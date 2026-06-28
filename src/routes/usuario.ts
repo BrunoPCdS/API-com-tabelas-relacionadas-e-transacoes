@@ -3,20 +3,18 @@ import { Router } from "express"
 import { z } from "zod"
 import bcrypt from 'bcrypt'
 import { gerarCodigo } from "../utilit/gerarCodigo"
+import { validarSenha } from "../utilit/validaSenha"
 import { verificaToken } from "../utilit/verificaToken"
+import nodemailer from "nodemailer"
 
 const router = Router()
-const expira = new Date()
-expira.setHours(expira.getHours() + 1)
 
 const usuarioSchema = z.object({
 	nome: z.string()
 		.min(3, { message: "O nome deve conter pelo menos 3 caracteres" })
 		.max(40, { message: "O nome deve conter no máximo 40 caracteres" }),
 	email: z.email({ message: "O email deve ser válido" }),
-	senha: z.string()
-		.min(6, { message: "A senha deve conter pelo menos 6 caracteres" })
-		.max(60, { message: "A senha deve conter no máximo 60 caracteres" }),
+	senha: z.string(),
 })
 
 const usuarioUpdateSchema = usuarioSchema.partial()
@@ -41,7 +39,7 @@ router.post("/", async (req, res) => {
 
 	const { nome, email, senha } = valida.data
 
-	const mensaErros = validaSenha(senha)
+	const mensaErros = validarSenha(senha)
 
 	if (mensaErros.length > 0) {
 		res.status(400).json({ error: mensaErros })
@@ -108,68 +106,40 @@ router.delete("/:id", async (req, res) => {
 	}
 
 	try {
-		await prisma.usuario.delete({
+		const usuario = await prisma.usuario.findUnique({
 			where: { id: idNumber },
 		})
-		res.status(204).send()
+
+		if (!usuario) {
+			res.status(404).json({ error: "Usuário não encontrado" })
+			return
+		}
+
+		// Usar uma transação para deletar registros dependentes primeiro
+		await prisma.$transaction([
+			// Deleta os logs associados ao usuário
+			prisma.log.deleteMany({
+				where: { usuarioId: idNumber },
+			}),
+			// Deleta as inscrições associadas ao usuário
+			prisma.inscricao.deleteMany({
+				where: { usuarioId: idNumber },
+			}),
+			// Finalmente, deleta o usuário
+			prisma.usuario.delete({
+				where: { id: idNumber },
+			}),
+			
+		])
+		res.status(200).json({ message: `Usuário '${usuario.nome}' deletado com sucesso.` })
 	} catch (error) {
+		console.error("Erro ao deletar usuário:", error)
 		res.status(500).json({ error: "Erro ao deletar usuario" })
 	}
 })
 
 
 
-// senha -------------------------------------------------------------------------
-
-function validaSenha(senha: string) {
-	const mensa: string[] = []
-
-	if (senha.length < 6) {
-		mensa.push("A senha deve conter pelo menos 6 caracteres")
-	}
-
-	if (senha.length > 60) {
-		mensa.push("A senha deve conter no máximo 60 caracteres")
-	}
-
-	let pequenas = 0
-	let grandes = 0
-	let numeros = 0
-	let especiais = 0
-
-	for (const letra of senha) {
-		if ((/[a-z]/).test(letra)) {
-			pequenas++
-		}
-		else if ((/[A-Z]/).test(letra)) {
-			grandes++
-		}
-		else if ((/[0-9]/).test(letra)) {
-			numeros++
-		}
-		else {
-			especiais++
-		}
-	}
-
-	if (pequenas === 0) {
-		mensa.push("A senha deve conter pelo menos uma letra minúscula")
-	}
-
-	if (grandes === 0) {
-		mensa.push("A senha deve conter pelo menos uma letra maiúscula")
-	}
-
-	if (numeros === 0) {
-		mensa.push("A senha deve conter pelo menos um número")
-	}
-
-	if (especiais === 0) {
-		mensa.push("A senha deve conter pelo menos um caractere especial")
-	}
-
-	return mensa
-}
 
 // recuperar senha ---------------------------------------------------------------
 router.post("/recuperar-senha", async (req, res) => {
@@ -196,13 +166,46 @@ router.post("/recuperar-senha", async (req, res) => {
 		}
 
 		const codigo = gerarCodigo()
+		const expira = new Date()
+		expira.setHours(expira.getHours() + 1)
 
 		await prisma.usuario.update({
 			where: { email },
-			data: { codigoRecuperacao: codigo, codigoRecuperacaoExpiracao: expira }
+			data: { codigoDeRecuperacao: codigo, codigoExpiraEm: expira }
 		})
 
-		console.log(`Código de recuperação para ${email}: ${codigo}`)
+		const transporter = nodemailer.createTransport({
+			host: "sandbox.smtp.mailtrap.io",
+			port: 587,
+			secure: false,
+			auth: {
+				user: process.env.MAILTRAP_EMAIL,
+				pass: process.env.MAILTRAP_SENHA,
+			},
+		})
+
+		try {
+			await transporter.sendMail({
+				from: process.env.MAILTRAP_EMAIL,
+				to: email,
+				subject: "Código de recuperação de senha",
+				html: `
+					<h2>Recuperação de senha</h2>
+					<p>Olá, ${usuario.nome}.</p>
+					<p>Use o código abaixo para redefinir sua senha:</p>
+					<p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">${codigo}</p>
+					<p>Esse código expira em 1 hora.</p>
+				`,
+			})
+		} catch (emailError) {
+			console.error("Erro ao enviar e-mail de recuperação:", emailError)
+			await prisma.usuario.update({
+				where: { email },
+				data: { codigoDeRecuperacao: null, codigoExpiraEm: null }
+			})
+			res.status(500).json({ error: "Erro ao enviar o código por e-mail" })
+			return
+		}
 
 		res.status(200).json({ message: "Código de recuperação enviado para o email" })
 	} catch (error) {
