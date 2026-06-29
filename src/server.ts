@@ -9,6 +9,9 @@ import routesInscricao from "./routes/inscricao"
 import alterarSenha from "./routes/alterarSenha"
 import routesLogin from "./routes/login"
 app.use(express.json())
+import baselog from "./utilit/baseLog"
+
+app.use(baselog)
 
 app.use("/usuario", routesUsuario)
 app.use("/eventos", routesEventos)

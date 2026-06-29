@@ -6,6 +6,7 @@ import { gerarCodigo } from "../utilit/gerarCodigo"
 import { validarSenha } from "../utilit/validaSenha"
 import { verificaToken } from "../utilit/verificaToken"
 import nodemailer from "nodemailer"
+import { registraLog } from "../utilit/baseLog"
 
 const router = Router()
 
@@ -46,6 +47,15 @@ router.post("/", async (req, res) => {
 		return
 	}
 
+	const usuarioExistente = await prisma.usuario.findUnique({
+		where: { email },
+	})
+
+	if (usuarioExistente) {
+		res.status(400).json({ error: "O email já está em uso" })
+		return
+	}
+
 	const salt = bcrypt.genSaltSync(12)
 	const hash = bcrypt.hashSync(senha, salt)
 
@@ -55,6 +65,7 @@ router.post("/", async (req, res) => {
 		})
 		res.status(201).json(usuario)
 	} catch (error) {
+		await registraLog("Erro ao criar usuário", req.userLogadoId)
 		res.status(500).json({ error: "Erro ao criar usuario" })
 	}
 })
@@ -90,16 +101,22 @@ router.put("/:id", verificaToken, async (req, res) => {
 			where: { id: req.userLogadoId },
 			data: dataUpdate,
 		})
+		await registraLog(`Usuário '${usuario.nome}' (ID: ${usuario.id}) foi atualizado.`, req.userLogadoId)
 		res.status(200).json(usuario)
 	} catch (error) {
+		await registraLog("Erro ao atualizar usuário", req.userLogadoId)
 		res.status(500).json({ error: "Erro ao atualizar usuario" })
 	}
 })
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", verificaToken, async (req, res) => {
 	const { id } = req.params
 	const idNumber = Number(id)
 
+	if (idNumber !== req.userLogadoId) {
+		res.status(403).json({ error: "Acesso negado. Você só pode deletar sua própria conta." })
+		return
+	}
 	if (Number.isNaN(idNumber)) {
 		res.status(400).json({ error: "O ID do usuário deve ser um número" })
 		return
@@ -131,6 +148,9 @@ router.delete("/:id", async (req, res) => {
 			}),
 			
 		])
+		// Registra o log da exclusão. Como o usuário foi deletado,
+		// não podemos mais associar o log a ele via ID.
+		await registraLog(`Usuário '${usuario.nome}' (ID: ${usuario.id}) foi deletado.`)
 		res.status(200).json({ message: `Usuário '${usuario.nome}' deletado com sucesso.` })
 	} catch (error) {
 		console.error("Erro ao deletar usuário:", error)
