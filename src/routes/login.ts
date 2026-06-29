@@ -25,6 +25,12 @@ router.post("/", async (req, res) => {
             res.status(400).json({ error: mensaPadrao })
             return
         }
+        
+        if (usuario.status === "Inativo") {
+            await registraLog(`Tentativa de login falhou para o email (conta inativa): ${email}`, usuario.id);
+            res.status(403).json({ error: "Sua conta não está ativa. Por favor, verifique seu e-mail para o link de ativação." });
+            return;
+        }
 
         if (bcrypt.compareSync(senha, usuario.senha)) {
             const secret = process.env.JWT_SECRET

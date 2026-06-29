@@ -15,7 +15,10 @@ model Usuario {
   criado_em             DateTime    @default(now())
   atualizado_em         DateTime    @updatedAt
   inscricao             Inscricao[]
-  logs                 Log[]
+  logs                  Log[]
+
+  status                Status      @default(Inativo)
+  codigoAtivacao        String?     @unique @db.VarChar(100)
 
   codigoDeRecuperacao      String?     @db.VarChar(60)
   codigoExpiraEm           DateTime?   // Para recuperação de senha
@@ -72,6 +75,11 @@ model Log {
   criado_em             DateTime    @default(now())
 
   @@map("logs")
+}
+
+enum Status {
+  Ativo
+  Inativo
 }
 
 enum Tipos {

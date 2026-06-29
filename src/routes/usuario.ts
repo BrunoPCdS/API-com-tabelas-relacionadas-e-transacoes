@@ -7,6 +7,7 @@ import { validarSenha } from "../utilit/validaSenha"
 import { verificaToken } from "../utilit/verificaToken"
 import nodemailer from "nodemailer"
 import { registraLog } from "../utilit/baseLog"
+import crypto from 'crypto';
 
 const router = Router()
 
@@ -58,17 +59,57 @@ router.post("/", async (req, res) => {
 
 	const salt = bcrypt.genSaltSync(12)
 	const hash = bcrypt.hashSync(senha, salt)
+	const codigoAtivacao = crypto.randomBytes(32).toString('hex');
 
 	try {
+		// 1. Cria o usuário no banco de dados
 		const usuario = await prisma.usuario.create({
-			data: { nome, email, senha: hash },
-		})
-		res.status(201).json(usuario)
+			data: {
+				nome,
+				email,
+				senha: hash,
+				codigoAtivacao: codigoAtivacao,
+			},
+		});
+
+		// 2. Prepara e envia o e-mail de ativação
+		const linkAtivacao = `http://${req.headers.host}/usuario/ativar/${codigoAtivacao}`;
+		const transporter = nodemailer.createTransport({
+			host: "sandbox.smtp.mailtrap.io",
+			port: 587,
+			secure: false,
+			auth: {
+				user: process.env.MAILTRAP_EMAIL,
+				pass: process.env.MAILTRAP_SENHA,
+			},
+		});
+
+		await transporter.sendMail({
+			from: process.env.MAILTRAP_EMAIL,
+			to: email,
+			subject: "Ativação de conta",
+			html: `
+				<h2>Bem-vindo(a) à nossa plataforma!</h2>
+				<p>Olá, ${nome}.</p>
+				<p>Obrigado por se cadastrar. Por favor, clique no link abaixo para ativar sua conta:</p>
+				<p><a href="${linkAtivacao}">Ativar minha conta</a></p>
+                <p>Se o botão não funcionar, copie e cole este link no seu navegador:</p>
+                <p>${linkAtivacao}</p>
+			`,
+		});
+
+		// 3. Responde ao cliente
+		res.status(201).json({ message: "Usuário cadastrado com sucesso! Verifique seu e-mail para ativar a conta." });
+
 	} catch (error) {
-		await registraLog("Erro ao criar usuário", req.userLogadoId)
-		res.status(500).json({ error: "Erro ao criar usuario" })
+		// Se qualquer passo (criação do usuário ou envio de e-mail) falhar, o erro será capturado aqui.
+		console.error("Erro no processo de cadastro:", error);
+		// Registra um log genérico. Não temos um ID de usuário logado aqui.
+		await registraLog(`Falha no processo de cadastro para o e-mail: ${email}`);
+		res.status(500).json({ error: "Ocorreu uma falha durante o processo de cadastro." });
 	}
-})
+});
+
 
 router.put("/:id", verificaToken, async (req, res) => {
 	const { id } = req.params
@@ -234,5 +275,38 @@ router.post("/recuperar-senha", async (req, res) => {
 
 	}
 })
+
+router.get("/ativar/:codigo", async (req, res) => {
+    const { codigo } = req.params;
+
+    try {
+        // Procura um usuário com o código de ativação fornecido
+        const usuario = await prisma.usuario.findUnique({
+            where: { codigoAtivacao: codigo }
+        });
+
+        // Se não encontrar, o código é inválido ou já foi usado
+        if (!usuario) {
+            return res.status(404).send("<h1>Código de ativação inválido ou expirado.</h1>");
+        }
+
+        // Se encontrar, atualiza o status para ATIVO e remove o código de ativação
+        await prisma.usuario.update({
+            where: { id: usuario.id },
+            data: {
+                status: 'Ativo',
+                codigoAtivacao: null // Limpa o código para não ser usado novamente
+            }
+        });
+
+        // Retorna uma mensagem de sucesso para o usuário
+        res.status(200).send("<h1>Conta ativada com sucesso!</h1><p>Você já pode fechar esta aba e fazer o login no aplicativo.</p>");
+
+    } catch (error) {
+        console.error("Erro ao ativar conta:", error);
+        res.status(500).send("<h1>Erro no servidor</h1><p>Ocorreu um erro ao tentar ativar sua conta. Tente novamente mais tarde.</p>");
+    }
+});
+
 
 export default router
