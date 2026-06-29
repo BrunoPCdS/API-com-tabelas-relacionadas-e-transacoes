@@ -21,6 +21,8 @@ model Usuario {
   deleted               Boolean     @default(false)
   deletedAt             DateTime?
 
+  ultimoLogin           DateTime?   @db.DateTime
+
   status                Status      @default(Inativo)
   codigoAtivacao        String?     @unique @db.VarChar(100)
 

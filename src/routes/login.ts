@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { registraLog } from "../utilit/baseLog"
 
+
 const router = Router()
 
 router.post("/", async (req, res) => {
@@ -33,6 +34,18 @@ router.post("/", async (req, res) => {
         }
 
         if (bcrypt.compareSync(senha, usuario.senha)) {
+            const ultimoLoginAnterior = usuario.ultimoLogin;
+            
+            // Atualiza a data do último login para o momento atual.
+            // Isso é feito de forma assíncrona para não atrasar a resposta ao usuário.
+            prisma.usuario.update({
+                where: { id: usuario.id },
+                data: { ultimoLogin: new Date() }
+            }).catch((error) => {
+                // Se a atualização falhar, apenas registramos o erro no console do servidor.
+                // O login do usuário não é impedido por isso.
+                console.error("Erro ao atualizar o último login:", error);
+            });
             const secret = process.env.JWT_SECRET
 
             if (!secret) {
@@ -44,12 +57,28 @@ router.post("/", async (req, res) => {
             const payload = { userLogadoId: usuario.id, userLogadoNome: usuario.nome, userLogadoEmail: usuario.email }
             const options = { expiresIn: '15m' } as object
             const token = jwt.sign(payload, secret, options)
+
+            // Cria a mensagem de boas-vindas dinamicamente
+            let mensagem: string;
+            if (ultimoLoginAnterior) {
+                const data = new Date(ultimoLoginAnterior);
+                const dataFormatada = data.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+                const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+                mensagem = `Bem-vindo, ${usuario.nome}! Seu último acesso ao sistema foi em ${dataFormatada} às ${horaFormatada}.`;
+            } else {
+                mensagem = `Bem-vindo, ${usuario.nome}. Este é o seu primeiro acesso ao sistema.`;
+            }
+
             res.status(200).json({ 
                 id: usuario.id,
                 nome: usuario.nome,
                 email: usuario.email,
-                token: token
+                token: token,
+                mensagem: mensagem // Mensagem pronta para ser exibida no frontend
             })
+            const logMessage = `Usuário ${usuario.nome} (ID: ${usuario.id}) logou com sucesso. Ultimo login anterior: ${ultimoLoginAnterior ? ultimoLoginAnterior.toISOString() : 'Nunca logado'}`;
+            await registraLog(logMessage, usuario.id);
+            return
         } else {
             await registraLog(`Tentativa de login falhou para o email (senha incorreta): ${email}`, usuario.id);
             res.status(400).json({ error: mensaPadrao })
