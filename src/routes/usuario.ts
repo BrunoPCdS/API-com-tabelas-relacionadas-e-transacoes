@@ -8,6 +8,11 @@ import { verificaToken } from "../utilit/verificaToken"
 import nodemailer from "nodemailer"
 import { registraLog } from "../utilit/baseLog"
 import crypto from 'crypto';
+import {
+    buscarUsuario,
+    listarUsuarios,
+    softDeleteUsuario
+} from "../utilit/usuarioService"
 
 const router = Router()
 
@@ -23,13 +28,26 @@ const usuarioUpdateSchema = usuarioSchema.partial()
 
 router.get("/", async (req, res) => {
 	try {
-		const usuarios = await prisma.usuario.findMany({})
+		const usuarios = await listarUsuarios()
 		res.status(200).json(usuarios)
 	} catch (error) {
 		res.status(500).json({ error: "Erro ao buscar usuario" })
 	}
 })
 
+// ROTA PARA LISTAR USUÁRIOS DELETADOS (SOFT DELETE)
+router.get("/deletados", verificaToken, async (req, res) => {
+	try {
+		const usuariosDeletados = await prisma.usuario.findMany({
+    	where: {
+        	deleted: true
+		}
+})
+		res.status(200).json(usuariosDeletados);
+	} catch (error) {
+		res.status(500).json({ error: "Erro ao buscar usuários deletados" });
+	}
+});
 
 
 router.post("/", async (req, res) => {
@@ -164,43 +182,78 @@ router.delete("/:id", verificaToken, async (req, res) => {
 	}
 
 	try {
-		const usuario = await prisma.usuario.findUnique({
-			where: { id: idNumber },
-		})
+		const usuario = await buscarUsuario(idNumber)
 
 		if (!usuario) {
 			res.status(404).json({ error: "Usuário não encontrado" })
 			return
 		}
 
-		// Usar uma transação para deletar registros dependentes primeiro
-		await prisma.$transaction([
-			// Deleta os logs associados ao usuário
-			prisma.log.deleteMany({
-				where: { usuarioId: idNumber },
-			}),
-			// Deleta as inscrições associadas ao usuário
-			prisma.inscricao.deleteMany({
-				where: { usuarioId: idNumber },
-			}),
-			// Finalmente, deleta o usuário
-			prisma.usuario.delete({
-				where: { id: idNumber },
-			}),
-			
-		])
-		// Registra o log da exclusão. Como o usuário foi deletado,
-		// não podemos mais associar o log a ele via ID.
+		await softDeleteUsuario(idNumber)
+
 		await registraLog(`Usuário '${usuario.nome}' (ID: ${usuario.id}) foi deletado.`)
 		res.status(200).json({ message: `Usuário '${usuario.nome}' deletado com sucesso.` })
 	} catch (error) {
 		console.error("Erro ao deletar usuário:", error)
+		await registraLog(`Falha ao deletar usuário (ID: ${idNumber})`, req.userLogadoId);
 		res.status(500).json({ error: "Erro ao deletar usuario" })
 	}
 })
 
 
 
+
+// ROTA PARA RESTAURAR UM USUÁRIO (SOFT DELETE)
+router.patch("/:id/restaurar", verificaToken, async (req, res) => {
+    const { id } = req.params
+    const idNumber = Number(id)
+
+    if (Number.isNaN(idNumber)) {
+        return res.status(400).json({
+            error: "ID inválido"
+        })
+    }
+
+    try {
+
+        const usuario = await prisma.usuario.findFirst({
+            where: {
+                id: idNumber,
+                deleted: true
+            }
+        })
+
+        if (!usuario) {
+            return res.status(404).json({
+                error: "Usuário não encontrado."
+            })
+        }
+
+        const usuarioRestaurado = await prisma.usuario.update({
+            where: {
+                id: idNumber
+            },
+            data: {
+                deleted: false,
+                deletedAt: null
+            }
+        })
+
+        await registraLog(
+            `Usuário '${usuarioRestaurado.nome}' restaurado.`,
+            req.userLogadoId
+        )
+
+        res.status(200).json(usuarioRestaurado)
+
+    } catch {
+
+        res.status(500).json({
+            error: "Erro ao restaurar usuário."
+        })
+
+    }
+})
 
 // recuperar senha ---------------------------------------------------------------
 router.post("/recuperar-senha", async (req, res) => {
@@ -217,10 +270,12 @@ router.post("/recuperar-senha", async (req, res) => {
 	const { email } = valida.data
 
 	try {
-		const usuario = await prisma.usuario.findUnique({
-			where: { email }
-		})
-
+		const usuario = await prisma.usuario.findFirst({
+    		where: {
+        		email,
+        		deleted: false
+    			}
+})
 		if (!usuario) {
 			res.status(404).json({ error: "Usuário não encontrado" })
 			return
