@@ -36,7 +36,7 @@ router.get("/", async (req, res) => {
 })
 
 // ROTA PARA LISTAR USUÁRIOS DELETADOS (SOFT DELETE)
-router.get("/deletados", verificaToken, async (req, res) => {
+router.get("/deletados", async (req, res) => {
 	try {
 		const usuariosDeletados = await prisma.usuario.findMany({
     	where: {
@@ -204,7 +204,7 @@ router.delete("/:id", verificaToken, async (req, res) => {
 
 
 // ROTA PARA RESTAURAR UM USUÁRIO (SOFT DELETE)
-router.patch("/:id/restaurar", verificaToken, async (req, res) => {
+router.patch("/:id/restaurar", async (req, res) => {
     const { id } = req.params
     const idNumber = Number(id)
 
